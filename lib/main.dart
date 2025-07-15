@@ -25,7 +25,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String current = "btcusdt";
-  final stream = WebSocketChannel.connect(
+  var stream = WebSocketChannel.connect(
     Uri.parse("wss://stream.binance.com:9443/ws/btcusdt@trade"),
   );
   String price = "0";
@@ -44,8 +44,17 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    current = currencies.first;
     load();
     super.initState();
+  }
+
+  void change(String crypto) {
+    stream.sink.close();
+    current = crypto;
+    final uri = Uri.parse("wss://stream.binance.com:9443/ws/$current@trade");
+    stream = WebSocketChannel.connect(uri);
+    load();
   }
 
   void load() {
@@ -70,13 +79,26 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "BTCUSDT",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+            DropdownButton<String>(
+              value: current,
+              onChanged: (value) {
+                change(value!);
+              },
+              items: currencies
+                  .map(
+                    (value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
             Text(
               double.parse(price).toStringAsFixed(2),
